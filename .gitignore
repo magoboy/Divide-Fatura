@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+# Nunca versionar prints ou dados reais de fatura
+*.jpg
+*.jpeg
+*.png
+*.pdf
+*backup*.json

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Divide Fatura</title>
+  <meta name="description" content="Divide a fatura do cartão compartilhado a partir dos prints do app do banco.">
+  <meta name="theme-color" content="#3b4fe0">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M12 14v5"/></svg>
+      <span>Divide Fatura</span>
+    </div>
+    <label class="month">
+      <span class="sr">Fatura de</span>
+      <input type="month" id="fatura-month" aria-label="Mês da fatura">
+    </label>
+    <button class="icon-btn" id="btn-settings" aria-label="Configurações">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="prints" aria-selected="true">1. Prints</button>
+    <button role="tab" data-tab="dividir">2. Dividir <span class="badge" id="badge-pend" hidden></span></button>
+    <button role="tab" data-tab="resumo">3. Resumo</button>
+  </nav>
+
+  <main>
+    <!-- 1. PRINTS -->
+    <section id="tab-prints" class="tab">
+      <label class="drop" id="drop">
+        <input type="file" id="files" accept="image/*" multiple hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3M12 4v12M7 9l5-5 5 5"/></svg>
+        <strong>Escolher prints da fatura</strong>
+        <small>Pode selecionar vários de uma vez. Repetidos e sobrepostos são removidos.</small>
+      </label>
+
+      <div id="thumbs" class="thumbs"></div>
+
+      <div class="card" id="read-box" hidden>
+        <div class="seg" role="radiogroup" aria-label="Como ler">
+          <label><input type="radio" name="mode" value="ocr" checked> <span>Grátis <small>no aparelho</small></span></label>
+          <label><input type="radio" name="mode" value="ai"> <span>Com IA <small>mais precisa</small></span></label>
+        </div>
+        <p class="hint" id="mode-hint"></p>
+        <button class="btn primary block" id="btn-read">Ler prints</button>
+        <div class="progress" id="progress" hidden><div></div></div>
+        <p class="status" id="read-status"></p>
+      </div>
+
+      <div class="card">
+        <label class="field">
+          <span>Total da fatura no app (opcional, para conferir)</span>
+          <input type="text" inputmode="decimal" id="total-informado" placeholder="R$ 0,00">
+        </label>
+        <p class="hint" id="total-check"></p>
+        <button class="btn" id="btn-add">+ Lançamento manual</button>
+      </div>
+    </section>
+
+    <!-- 2. DIVIDIR -->
+    <section id="tab-dividir" class="tab" hidden>
+      <div class="sumbar" id="sumbar"></div>
+      <div class="filters" id="filters">
+        <button data-f="todos" class="on">Todos</button>
+        <button data-f="pend">Sem divisão</button>
+        <button data-f="A" id="f-A">A</button>
+        <button data-f="B" id="f-B">B</button>
+        <button data-f="S">Compartilhados</button>
+        <button data-f="pag">Pagamentos</button>
+      </div>
+      <div class="bulk" id="bulk"></div>
+      <div id="list" class="list"></div>
+      <p class="empty" id="empty" hidden>Nenhum lançamento ainda. Comece pela aba <b>1. Prints</b>.</p>
+    </section>
+
+    <!-- 3. RESUMO -->
+    <section id="tab-resumo" class="tab" hidden>
+      <div id="totals" class="totals"></div>
+      <div id="warnings"></div>
+      <div class="card">
+        <div class="seg" role="radiogroup" aria-label="Tipo de relatório">
+          <label><input type="radio" name="rep" value="s" checked> <span>Simplificado</span></label>
+          <label><input type="radio" name="rep" value="d"> <span>Detalhado</span></label>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btn-share-text">Enviar texto</button>
+          <button class="btn" id="btn-copy">Copiar</button>
+          <button class="btn primary" id="btn-share-pdf">Enviar PDF</button>
+          <button class="btn" id="btn-pdf">Baixar PDF</button>
+          <button class="btn" id="btn-txt">Baixar .txt</button>
+        </div>
+        <pre id="preview" class="preview"></pre>
+      </div>
+    </section>
+  </main>
+
+  <!-- Editar lançamento -->
+  <dialog id="dlg-edit">
+    <form method="dialog" id="form-edit">
+      <h2 id="edit-title">Lançamento</h2>
+      <label class="field"><span>Descrição</span><input name="desc" required></label>
+      <div class="row">
+        <label class="field"><span>Valor</span><input name="valor" inputmode="decimal" required></label>
+        <label class="field"><span>Tipo</span>
+          <select name="kind"><option value="compra">Compra</option><option value="estorno">Estorno</option><option value="pagamento">Pagamento</option></select>
+        </label>
+      </div>
+      <div class="row">
+        <label class="field"><span>Data</span><input name="date" type="date"></label>
+        <label class="field"><span>Hora</span><input name="time" type="time"></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>Parcela</span><input name="pn" inputmode="numeric" placeholder="2"></label>
+        <label class="field"><span>de</span><input name="pm" inputmode="numeric" placeholder="10"></label>
+      </div>
+      <div class="dlg-actions">
+        <button value="delete" class="btn danger" id="btn-del">Excluir</button>
+        <span class="grow"></span>
+        <button value="cancel" class="btn" formnovalidate>Cancelar</button>
+        <button value="save" class="btn primary">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Configurações -->
+  <dialog id="dlg-settings">
+    <form method="dialog" id="form-settings">
+      <h2>Configurações</h2>
+      <div class="row">
+        <label class="field"><span>Nome da pessoa A</span><input name="nameA" required></label>
+        <label class="field"><span>Nome da pessoa B</span><input name="nameB" required></label>
+      </div>
+      <label class="field"><span>Ao tocar em "Dividir", quanto fica com A (%)</span><input name="defaultPct" type="number" min="0" max="100" step="1"></label>
+      <label class="field"><span>Chave da API da Anthropic (para ler com IA)</span>
+        <input name="apiKey" type="password" autocomplete="off" placeholder="sk-ant-...">
+      </label>
+      <p class="hint">A chave fica salva só neste aparelho e é enviada só para a Anthropic. Crie uma em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
+
+      <h3>Divisões lembradas</h3>
+      <p class="hint">Quando vocês dividem uma compra, o app lembra e aplica de novo nas próximas do mesmo lugar.</p>
+      <div id="rules" class="rules"></div>
+
+      <h3>Backup</h3>
+      <div class="actions">
+        <button type="button" class="btn" id="btn-export">Exportar backup</button>
+        <label class="btn">Importar backup<input type="file" id="import-file" accept="application/json,.json" hidden></label>
+        <button type="button" class="btn danger" id="btn-clear">Apagar esta fatura</button>
+      </div>
+      <div class="dlg-actions">
+        <span class="grow"></span>
+        <button value="save" class="btn primary">Fechar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

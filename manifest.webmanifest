@@ -1,0 +1,14 @@
+{
+  "name": "Divide Fatura",
+  "short_name": "Divide Fatura",
+  "description": "Divide a fatura do cartão compartilhado a partir dos prints do app do banco.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5fb",
+  "theme_color": "#3b4fe0",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
